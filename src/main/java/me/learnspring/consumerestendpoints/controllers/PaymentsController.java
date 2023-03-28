@@ -3,10 +3,12 @@ package me.learnspring.consumerestendpoints.controllers;
 import me.learnspring.consumerestendpoints.model.Payment;
 import me.learnspring.consumerestendpoints.proxy.PaymentProxy;
 import me.learnspring.consumerestendpoints.proxy.PaymentProxyRestTemplate;
+import me.learnspring.consumerestendpoints.proxy.PaymentProxyWebClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -17,10 +19,12 @@ public class PaymentsController {
     Logger logger = Logger.getLogger(PaymentsController.class.getName());
     private final PaymentProxy paymentProxy;
     private final PaymentProxyRestTemplate paymentProxyRestTemplate;
+    private final PaymentProxyWebClient paymentProxyWebClient;
 
-    public PaymentsController(PaymentProxy paymentProxy, PaymentProxyRestTemplate paymentProxyRestTemplate) {
+    public PaymentsController(PaymentProxy paymentProxy, PaymentProxyRestTemplate paymentProxyRestTemplate, PaymentProxyWebClient paymentProxyWebClient) {
         this.paymentProxy = paymentProxy;
         this.paymentProxyRestTemplate = paymentProxyRestTemplate;
+        this.paymentProxyWebClient = paymentProxyWebClient;
     }
 
     @PostMapping("/payment")
@@ -53,5 +57,13 @@ public class PaymentsController {
                 .accepted()
                 .header("paymentID", UUID.randomUUID().toString())
                 .body(paymentReceived);
+    }
+
+    @PostMapping("/pay")
+    public Mono<Payment> makePayment(
+            @RequestBody Payment payment
+    ) {
+        String requestId = UUID.randomUUID().toString();
+        return paymentProxyWebClient.createPayment(requestId,payment);
     }
 }
